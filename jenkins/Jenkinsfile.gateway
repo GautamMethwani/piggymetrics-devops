@@ -1,0 +1,61 @@
+pipeline {
+    agent any
+    environment {
+        SERVICE = "gateway"
+        JAVA8_HOME = "/opt/java8"
+        REGISTRY = "localhost:5000"
+    }
+    options { timestamps(); disableConcurrentBuilds() }
+    stages {
+        stage('Prep') {
+            steps { sh 'chmod +x scripts/*.sh' }
+        }
+        stage('Checkout PiggyMetrics source') {
+            steps {
+                dir('app') {
+                    git branch: 'master', url: 'https://github.com/sqshq/piggymetrics.git'
+                }
+            }
+        }
+        stage('Patch Dockerfile base image') {
+            steps {
+                dir("app/${SERVICE}") {
+                    sh "sed -i 's|^FROM java:8-jre|FROM eclipse-temurin:8-jre-jammy|' Dockerfile"
+                }
+            }
+        }
+        stage('Build & Test') {
+            steps {
+                dir("app/${SERVICE}") {
+                    sh 'JAVA_HOME=$JAVA8_HOME PATH=$JAVA8_HOME/bin:$PATH mvn -B clean package -DskipTests'
+                }
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                dir("app/${SERVICE}") {
+                    sh "docker build -t ${REGISTRY}/piggymetrics-${SERVICE}:${BUILD_NUMBER} -t piggymetrics-${SERVICE}:${BUILD_NUMBER} ."
+                }
+            }
+        }
+        stage('Push to Registry') {
+            steps {
+                sh "docker push ${REGISTRY}/piggymetrics-${SERVICE}:${BUILD_NUMBER}"
+            }
+        }
+        stage('Deploy to Kind (Blue-Green)') {
+            steps {
+                sh "scripts/blue-green-switch.sh ${SERVICE} ${BUILD_NUMBER} 1"
+            }
+        }
+    }
+    post {
+        failure {
+            echo "Pipeline failed for ${SERVICE} build #${BUILD_NUMBER}. Rolling back."
+            sh "scripts/rollback.sh ${SERVICE} 1 || true"
+        }
+        always {
+            sh 'docker image prune -f || true'
+        }
+    }
+}

@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: account-mongodb, namespace: piggymetrics }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: account-mongodb } }
+  template:
+    metadata: { labels: { app: account-mongodb } }
+    spec:
+      containers:
+        - name: mongodb
+          image: piggymetrics-mongodb:local
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 27017 }]
+          envFrom: [{ secretRef: { name: piggymetrics-secrets } }]
+          readinessProbe: { tcpSocket: { port: 27017 }, initialDelaySeconds: 10, periodSeconds: 10 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: account-mongodb, namespace: piggymetrics }
+spec:
+  selector: { app: account-mongodb }
+  ports: [{ port: 27017, targetPort: 27017 }]

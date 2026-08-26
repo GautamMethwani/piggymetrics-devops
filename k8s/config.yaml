@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: config, namespace: piggymetrics }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: config } }
+  template:
+    metadata: { labels: { app: config } }
+    spec:
+      containers:
+        - name: config
+          image: piggymetrics-config:local
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8888 }]
+          envFrom: [{ secretRef: { name: piggymetrics-secrets } }]
+          readinessProbe: { tcpSocket: { port: 8888 }, initialDelaySeconds: 15, periodSeconds: 10 }
+          livenessProbe: { tcpSocket: { port: 8888 }, initialDelaySeconds: 30, periodSeconds: 20 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: config, namespace: piggymetrics }
+spec:
+  selector: { app: config }
+  ports: [{ port: 8888, targetPort: 8888 }]

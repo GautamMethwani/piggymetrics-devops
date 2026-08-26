@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-green
+  namespace: piggymetrics
+  labels: { app: gateway, color: green }
+spec:
+  replicas: 0
+  selector: { matchLabels: { app: gateway, color: green } }
+  template:
+    metadata: { labels: { app: gateway, color: green } }
+    spec:
+      containers:
+        - name: gateway
+          image: piggymetrics-gateway:local
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 4000 }]
+          envFrom: [{ secretRef: { name: piggymetrics-secrets } }]
+          readinessProbe: { tcpSocket: { port: 4000 }, initialDelaySeconds: 30, periodSeconds: 10, failureThreshold: 6 }
+          livenessProbe: { tcpSocket: { port: 4000 }, initialDelaySeconds: 60, periodSeconds: 20 }

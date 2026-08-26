@@ -1,0 +1,24 @@
+# k8s/turbine-stream-service.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: turbine-stream-service, namespace: piggymetrics }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: turbine-stream-service } }
+  template:
+    metadata: { labels: { app: turbine-stream-service } }
+    spec:
+      containers:
+        - name: turbine-stream-service
+          image: piggymetrics-turbine-stream-service:local
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8080 }]
+          envFrom: [{ secretRef: { name: piggymetrics-secrets } }]
+          readinessProbe: { tcpSocket: { port: 8080 }, initialDelaySeconds: 20, periodSeconds: 10 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: turbine-stream-service, namespace: piggymetrics }
+spec:
+  selector: { app: turbine-stream-service }
+  ports: [{ port: 8989, targetPort: 8080 }]

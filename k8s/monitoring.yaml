@@ -1,0 +1,24 @@
+# k8s/monitoring.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: monitoring, namespace: piggymetrics }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: monitoring } }
+  template:
+    metadata: { labels: { app: monitoring } }
+    spec:
+      containers:
+        - name: monitoring
+          image: piggymetrics-monitoring:local
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8080 }]
+          envFrom: [{ secretRef: { name: piggymetrics-secrets } }]
+          readinessProbe: { tcpSocket: { port: 8080 }, initialDelaySeconds: 20, periodSeconds: 10 }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: monitoring, namespace: piggymetrics }
+spec:
+  selector: { app: monitoring }
+  ports: [{ port: 9000, targetPort: 8080 }]

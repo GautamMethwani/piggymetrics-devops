@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata: { name: gateway, namespace: piggymetrics }
+spec:
+  selector: { app: gateway, color: blue }
+  ports: [{ port: 4000, targetPort: 4000 }]
+---
+apiVersion: v1
+kind: Service
+metadata: { name: gateway-preview, namespace: piggymetrics }
+spec:
+  selector: { app: gateway, color: green }
+  ports: [{ port: 4000, targetPort: 4000 }]

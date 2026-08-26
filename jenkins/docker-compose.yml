@@ -1,0 +1,26 @@
+services:
+  jenkins:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DOCKER_GID: "${DOCKER_GID:-999}"
+    container_name: piggymetrics-jenkins
+    restart: unless-stopped
+    ports:
+      - "8082:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${HOME}/.kube/kind-piggymetrics-jenkins.config:/var/jenkins_home/.kube/config:ro
+    environment:
+      - KUBECONFIG=/var/jenkins_home/.kube/config
+    networks:
+      - kind
+networks:
+  kind:
+    external: true
+    name: kind
+volumes:
+  jenkins_home:

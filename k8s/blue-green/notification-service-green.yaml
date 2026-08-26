@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service-green
+  namespace: piggymetrics
+  labels: { app: notification-service, color: green }
+spec:
+  replicas: 0
+  selector: { matchLabels: { app: notification-service, color: green } }
+  template:
+    metadata: { labels: { app: notification-service, color: green } }
+    spec:
+      containers:
+        - name: notification-service
+          image: piggymetrics-notification-service:local
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 8000 }]
+          envFrom: [{ secretRef: { name: piggymetrics-secrets } }]
+          readinessProbe: { tcpSocket: { port: 8000 }, initialDelaySeconds: 30, periodSeconds: 10, failureThreshold: 6 }
+          livenessProbe: { tcpSocket: { port: 8000 }, initialDelaySeconds: 60, periodSeconds: 20 }

@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: statistics-service-blue
+  namespace: piggymetrics
+  labels: { app: statistics-service, color: blue }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: statistics-service, color: blue } }
+  template:
+    metadata: { labels: { app: statistics-service, color: blue } }
+    spec:
+      containers:
+        - name: statistics-service
+          image: piggymetrics-statistics-service:local
+          imagePullPolicy: IfNotPresent
+          ports: [{ containerPort: 7000 }]
+          envFrom: [{ secretRef: { name: piggymetrics-secrets } }]
+          readinessProbe: { tcpSocket: { port: 7000 }, initialDelaySeconds: 30, periodSeconds: 10, failureThreshold: 6 }
+          livenessProbe: { tcpSocket: { port: 7000 }, initialDelaySeconds: 60, periodSeconds: 20 }

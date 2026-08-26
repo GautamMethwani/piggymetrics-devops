@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata: { name: notification-service, namespace: piggymetrics }
+spec:
+  selector: { app: notification-service, color: blue }
+  ports: [{ port: 8000, targetPort: 8000 }]
+---
+apiVersion: v1
+kind: Service
+metadata: { name: notification-service-preview, namespace: piggymetrics }
+spec:
+  selector: { app: notification-service, color: green }
+  ports: [{ port: 8000, targetPort: 8000 }]
